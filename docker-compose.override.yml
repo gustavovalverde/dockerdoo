@@ -1,0 +1,60 @@
+version: "2"
+
+services:
+  odoo1:
+    image: iterativodo/dockerdoo:${ODOO_VERSION}
+    env_file: .env
+    container_name: odoo1
+    restart: always
+
+    environment:
+      - USER=odoo
+      - PASSWORD=odoo
+      - VIRTUAL_HOST=odoo1.example.com
+      - VIRTUAL_NETWORK=nginx-proxy
+      - VIRTUAL_PORT=8069
+      - ODOO_LONGPOLLING_PORT=8072
+      - LETSENCRYPT_HOST=odoo1.example.com
+      - LETSENCRYPT_EMAIL=test@example.com
+
+    ports: ["8069", "8072"]
+
+    volumes:
+      # Host paths (addons & conf)
+      - ./custom:${ODOO_EXTRA_ADDONS}:delegated
+      # Named volumes
+      - odoo-web-data:${ODOO_DATA_DIR}
+      - odoo-testlogs:${ODOO_LOGS_DIR}
+
+    depends_on:
+      - letsencrypt-nginx-proxy-companion
+      - db
+
+  odoo2:
+    image: iterativodo/dockerdoo:${ODOO_VERSION}
+    env_file: .env
+    container_name: odoo2
+    restart: always
+
+    environment:
+      - USER=odoo
+      - PASSWORD=odoo
+      - VIRTUAL_HOST=odoo2.example.com
+      - VIRTUAL_NETWORK=nginx-proxy
+      - VIRTUAL_PORT=8069
+      - ODOO_LONGPOLLING_PORT=8072
+      - LETSENCRYPT_HOST=odoo2.example.com
+      - LETSENCRYPT_EMAIL=test@example.com
+
+    ports: ["8069", "8072"]
+
+    volumes:
+      # Host paths (addons & conf)
+      - ./custom:${ODOO_EXTRA_ADDONS}:delegated
+      # Named volumes
+      - odoo-web-data:${ODOO_DATA_DIR}
+      - odoo-testlogs:${ODOO_LOGS_DIR}
+
+    depends_on:
+      - letsencrypt-nginx-proxy-companion
+      - db

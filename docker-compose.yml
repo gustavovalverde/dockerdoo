@@ -46,35 +46,6 @@ services:
     environment:
       - NGINX_DOCKER_GEN_CONTAINER=nginx-gen
 
-  odoo:
-    image: iterativodo/dockerdoo:${ODOO_VERSION}
-    env_file: .env
-    container_name: odoo
-    restart: always
-
-    ports: ["8069:8069", "8072:8072"]
-
-    volumes:
-      # Host paths (addons & conf)
-      - ./custom:${ODOO_EXTRA_ADDONS}:delegated
-      # Named volumes
-      - odoo-web-data:${ODOO_DATA_DIR}
-      - odoo-testlogs:${ODOO_LOGS_DIR}
-
-    depends_on:
-      - letsencrypt-nginx-proxy-companion
-      - db
-
-    environment:
-      - USER=odoo
-      - PASSWORD=odoo
-      - VIRTUAL_HOST=odoo.example.com
-      - VIRTUAL_NETWORK=nginx-proxy
-      - VIRTUAL_PORT=8069
-      - ODOO_LONGPOLLING_PORT=8072
-      - LETSENCRYPT_HOST=odoo.example.com
-      - LETSENCRYPT_EMAIL=test@example.com
-
   # ------------------------
   db:
     image: postgres:${PSQL_VERSION}
