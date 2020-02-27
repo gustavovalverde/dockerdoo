@@ -1,10 +1,5 @@
 version: "2"
 
-volumes:
-  odoo-web-data:
-  odoo-testlogs:
-  odoo-db-data:
-
 services:
   nginx:
     restart: always
@@ -45,15 +40,3 @@ services:
       - "./volumes/proxy/certs:/etc/nginx/certs:rw"
     environment:
       - NGINX_DOCKER_GEN_CONTAINER=nginx-gen
-
-  # ------------------------
-  db:
-    image: postgres:${PSQL_VERSION}
-    restart: always
-    volumes:
-      - odoo-db-data:/var/lib/postgresql/data/pgdata
-    environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - PGDATA=/var/lib/postgresql/data/pgdata
