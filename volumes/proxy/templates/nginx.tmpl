@@ -31,10 +31,6 @@ map $http_upgrade $proxy_connection {
   '' close;
 }
 
-gzip on;
-gzip_min_length 1100;
-gzip_buffers 4 32k;
-gzip_vary on;
 gzip_types text/plain text/css application/javascript application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
 
 log_format vhost '$host $remote_addr - $remote_user [$time_local] '
@@ -107,20 +103,6 @@ upstream {{ $host }} {
 {{ end }}
 }
 
-upstream {{ host }}-chat {
-{{ range $container := $containers }}
-	{{ range $knownNetwork := $CurrentContainer.Networks }}
-		{{ range $containerNetwork := $container.Networks }}
-			{{ if eq $knownNetwork.Name $containerNetwork.Name }}
-				{{ $port := coalesce $container.Env.ODOO_LONGPOLLING_PORT "8072" }}
-				{{ $address := where $container.Addresses "Port" $port | first }}
-				{{ template "upstream" (dict "Container" $container "Address" $address "Network" $containerNetwork) }}
-			{{ end }}
-		{{ end }}
-	{{ end }}
-{{ end }}
-}
-
 {{ $default_host := or ($.Env.DEFAULT_HOST) "" }}
 {{ $default_server := index (dict $host "" $default_host "default_server") $host }}
 
@@ -186,23 +168,12 @@ server {
 	include /etc/nginx/vhost.d/default;
 	{{ end }}
 	
-	# Specifies the maximum accepted body size of a client request,
-	# as indicated by the request header Content-Length
-	client_max_body_size	250M;
-	
-	# add ssl specific settings
-	keepalive_timeout	60;
-	
-	# increase proxy buffer to handle som Odoo web requests
-	proxy_buffers		16 64k;
-	proxy_buffer_size	128k;
-	
   	location /longpolling {
 		{{ if eq $proto "uwsgi" }}
 		include uwsgi_params;
-		uwsgi_pass {{ trim $proto }}://{{ trim $host }}-chat;
+		uwsgi_pass {{ trim $proto }}://{{ trim $host }};
 		{{ else }}
-		proxy_pass {{ trim $proto }}://{{ trim $host }}-chat;
+		proxy_pass {{ trim $proto }}://{{ trim $host }};
 		{{ end }}
 		{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) }}
 		auth_basic	"Restricted {{ $host }}";
@@ -231,15 +202,6 @@ server {
                 {{ else if (exists "/etc/nginx/vhost.d/default_location") }}
                 include /etc/nginx/vhost.d/default_location;
                 {{ end }}
-	}
-	
-	# cache some static data in memory for 60mins
-	# under heavy load this should relieve stress on the Odoo web interface
-	location ~* /[0-9a-zA-Z_]*/static/ {
-		proxy_cache_valid	200 60m;
-		proxy_buffering		on;
-		expires			864000;
-		proxy_pass		{{ trim $proto }}://{{ trim $host }};
 	}
 }
 
